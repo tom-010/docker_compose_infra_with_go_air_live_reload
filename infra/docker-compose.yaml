@@ -11,8 +11,20 @@ services:
       - ./certs:/certs
     depends_on:
       - auth
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - login
+
+  login:
+    image: cosmtrek/air:v1.40.2
+    environment:
+      air_wd: /app
+      REALM: '${KEYCLOAK_REALM}'
+      CLIENT_ID: '${KEYCLOAK_CLIENT_ID}'
+      CLIENT_SECRET: '${KEYCLOAK_CLIENT_SECRET}'
+      KEYCLOAK_URL: 'http://auth:8080'
+    volumes: 
+      - ..:/app
+    expose:
+      - 8081
 
   auth:
       build: keycloak
