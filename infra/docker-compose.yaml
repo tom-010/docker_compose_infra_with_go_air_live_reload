@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+
+  reverse-proxy:
+    build: reverse_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/certs
+    depends_on:
+      - auth
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  auth:
+      build: keycloak
+      environment:
+        KEYCLOAK_IMPORT: /opt/jboss/keycloak/imports/realm.json -Dkeycloak.profile.feature.upload_scripts=enabled
+        DB_VENDOR: postgres
+        DB_ADDR: auth-db
+        DB_DATABASE: auth-db
+        DB_USER: auth-db
+        DB_SCHEMA: public
+        DB_PASSWORD: password
+        # KEYCLOAK_USER: '${KEYCLOAK_USER}'
+        # KEYCLOAK_PASSWORD: '${KEYCLOAK_PASSWORD}'
+        PROXY_ADDRESS_FORWARDING: "true"
+      expose:
+        - 8080
+      depends_on:
+        - auth-db
+
+  auth-db:
+      image: postgres
+      volumes:
+        - auth-db-data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_DB: auth-db
+        POSTGRES_USER: auth-db
+        POSTGRES_PASSWORD: password
+
+volumes:
+  auth-db-data:
